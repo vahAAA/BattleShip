@@ -22,7 +22,8 @@ public class Field extends Parent {
     Image image = new Image("dot.png"); // бекграунд для промаха
     ImagePattern imagePattern = new ImagePattern(image);
 
-    public Field(boolean enemy, EventHandler<? super MouseEvent> handler) { // ивент на нажатие кнопки мышкой
+    public Field(boolean enemy, EventHandler<? super MouseEvent> handler) {
+        // ивент на нажатие кнопки мышкой
         this.enemy = enemy;
         for (int y = 0; y < 10; y++) {
             HBox row = new HBox(); // в каждую ячейку ВИбокса будет помещен целый ЕйчБокс
@@ -73,7 +74,10 @@ public class Field extends Parent {
         return (Cell)((HBox)rows.getChildren().get(y)).getChildren().get(x);
     }
 
-    private Cell[] getNeighbors(int x, int y) { // определяем соседей, чтобы нельзя было ставить впритык (8-связность)
+    private Cell[] getNeighbors(int x, int y) {
+        /*
+        определяем соседей, чтобы нельзя было ставить впритык (8-связность)
+        */
         Point2D[] points = new Point2D[] {
                 new Point2D(x - 1, y),
                 new Point2D(x + 1, y),
@@ -97,10 +101,12 @@ public class Field extends Parent {
     }
 
 
-    private Cell[] getShipCells(int x, int y) { // определяем все ячейки корабля, для автозаполения его соседей при убийстве
+    private Cell[] getShipCells(int x, int y) {
         /*
-        Так как мы не знаем, какая ячейка будет нажата последней, мы идем от нее в две стороны по у для вертикального
-        корабля и по х для горизонтального, пока не найдем пустую ячейку
+        Определяем все ячейки корабля, для автозаполения его соседей при убийстве
+        Так как мы не знаем, какая ячейка будет нажата последней, мы идем от нее в
+        две стороны по у для вертикального корабля и по х для горизонтального,
+        пока не найдем пустую ячейку
          */
         List<Cell> isShip = new ArrayList<Cell>();
         int i = 0;
@@ -204,6 +210,7 @@ public class Field extends Parent {
         public int x, y; //координаты
         public Ship ship = null;//какому кораблю принадлежит
         public boolean wasShot = false;
+        public boolean partOfDeadShip=false;
 
         private Field field;
 
@@ -240,13 +247,20 @@ public class Field extends Parent {
             if (ship != null) {
                 ship.hit();
                 setFill(Color.PURPLE);
+                if(ship.type==1)
+                    partOfDeadShip=true;
                 if (!ship.isAlive()) {
 
                     for(int j = 0; j< field.getShipCells(x,y).length; j++) {
                         field.getShipCells(x,y)[j].setFill(Color.RED);
+                        field.getShipCells(x,y)[j].partOfDeadShip=true;
                         markAsShot(field.getNeighbors(field.getShipCells(x,y)[j].x, field.getShipCells(x,y)[j].y));
                     }
                     field.ships--;
+                }
+                else
+                {
+                    partOfDeadShip=false;
                 }
                 return true;
             }

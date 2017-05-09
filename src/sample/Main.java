@@ -22,7 +22,8 @@ public class Main extends Application {
     private int shipsToPlace = 10;
     private boolean enemyTurn = false;
     private Random random = new Random();
-
+    private boolean ifHit = false, ifHitStart = false;
+    private int xHit=0, yHit=0, xHitStart, yHitStart, counter=0;
     private Parent createContent() {
         BorderPane root = new BorderPane();
         root.setPrefSize(600, 400);
@@ -46,7 +47,8 @@ public class Main extends Application {
 
                 if (reply == JOptionPane.YES_OPTION) {
                     try {
-                        JOptionPane.showMessageDialog(null,"Sorry, but one game is enough, buy!"); // толстая шутка
+                        JOptionPane.showMessageDialog(null,
+                                "Sorry, but one game is enough, buy!"); // толстая шутка
                         System.exit(0);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -71,7 +73,8 @@ public class Main extends Application {
                 if (--shipsToPlace == 0) { //если поставили корабль, уменьшаем количество всех кораблей.
                     // Если 0, начинаем игру
                     startGame();
-                    JOptionPane.showMessageDialog(null,"You have placed all your ships. Good luck!");
+                    JOptionPane.showMessageDialog(null,
+                            "You have placed all your ships. Good luck!");
                 }
             }
         });
@@ -89,15 +92,77 @@ public class Main extends Application {
     }
 
     private void enemyMove() {
+        /*
+        Логика "нашего энеми"
+        Сначала мы бьем рандомом. Если попадаем, то выбираем по очереди соседние клетки
+        по 4-связности. И потом переопределяем ту ячейку, соседей которой будем искать.
+        Если мы со средины пошли в одну сторону и дошли до конца, то с другой стороны
+        осталась еще ячейка, поэтому в этой ситуации мы опять возвращаемся на самую первую точку,
+        по которой мы попали.
+         */
         while (enemyTurn) {
-            int x = random.nextInt(10); //"ии" выбирает рандомную точку
-            int y = random.nextInt(10);
+            int x=0, y=0;
+
+            if(!ifHit) {
+                 x = random.nextInt(10); //"ии" выбирает рандомную точку
+                 y = random.nextInt(10);
+                xHitStart= x ;
+                yHitStart= y ;
+            }else
+            {
+                if(xHit+1<10 && !playerField.getCell(xHit+1,yHit).wasShot) {
+                    x = xHit + 1;
+                    y = yHit;
+                }
+                else if(xHit-1>=0 && !playerField.getCell(xHit-1,yHit).wasShot){
+                    x = xHit - 1;
+                    y = yHit;
+                }
+                else if(yHit+1<10 && !playerField.getCell(xHit,yHit+1).wasShot){
+                    x = xHit;
+                    y = yHit+1;
+                }
+                else if(yHit-1>=0 && !playerField.getCell(xHit,yHit-1).wasShot){
+                    x = xHit;
+                    y = yHit-1;
+                }
+                else {
+                    if(counter>2) {
+                        ifHit=false;
+                        counter=0;
+                    }else {
+                        x = xHit = xHitStart;
+                        y = yHit = yHitStart;
+                        counter++;
+                    }
+                }
+
+            }
+
+
+
+            System.out.println("x "+x+" y "+y);
 
             Field.Cell cell = playerField.getCell(x, y); //выбираем на нашем борде выбранную рандомом точку
             if (cell.wasShot)
                 continue; //если точка уже была выбрана, идем дальше
 
+            counter=0;
             enemyTurn = cell.shoot();//продолжаем, если попали
+            if(enemyTurn) {
+
+                if(!playerField.getCell(xHit,yHit).partOfDeadShip) {
+                    xHit = x;
+                    yHit = y;
+                    ifHit = true;
+                }
+                else
+                {
+                    xHit = 0;
+                    yHit = 0;
+                    ifHit=false;
+                }
+            }
 
             if (playerField.ships == 0) {
                 running=false;
